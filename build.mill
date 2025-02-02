@@ -1,0 +1,22 @@
+package build
+
+import $packages._
+
+import $file.framework.{helpers => framework}
+import framework.{
+  copyBySwap,
+  makePreludeImportsCompilerOption,
+  BaseScalaJSModule,
+  FrameworkPreludeImports,
+  FrameworkTestModule,
+  ScalaDefaultImports,
+  Versions => FrameworkVersions,
+}
+
+import coursier.maven.MavenRepository
+import mill.scalalib.scalafmt.ScalafmtModule
+import java.nio.file.Files
+import mill.api.Logger
+import os.{Path, RelPath}
+import mill.scalajslib.api.{ModuleKind, ModuleSplitStyle, Report}
+import mill._, scalalib._, scalajslib._

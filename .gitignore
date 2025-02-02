@@ -1,0 +1,8 @@
+/.idea
+/.bsp
+/.metals
+/.bloop
+/.ammonite
+
+# Mill build tool output
+/out
