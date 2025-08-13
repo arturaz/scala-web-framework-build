@@ -1,8 +1,17 @@
+//| mill-version: 1.0.3
+//| mill-jvm-opts:
+//| # Should be enough for compilation. Server compiles fine with 1GB, but ScalablyTyped conversion needs more.
+//| - "-Xmx4G"
+//| # ZGC returns unused memory back to the OS, so mill does not occupy so much memory if unused
+//| - "-XX:+UseZGC"
+//| - "-XX:ZUncommitDelay=30"
+//| - "-XX:ZCollectionInterval=5"
+//| # Enable tools like gprofiler
+//| - "-XX:+EnableDynamicAgentLoading"
+
 package build
 
-import $packages._
-
-import $file.framework.{helpers => framework}
+import build.framework
 import framework.{
   copyBySwap,
   makePreludeImportsCompilerOption,
@@ -13,10 +22,4 @@ import framework.{
   Versions => FrameworkVersions,
 }
 
-import coursier.maven.MavenRepository
-import mill.scalalib.scalafmt.ScalafmtModule
-import java.nio.file.Files
-import mill.api.Logger
-import os.{Path, RelPath}
-import mill.scalajslib.api.{ModuleKind, ModuleSplitStyle, Report}
-import mill._, scalalib._, scalajslib._
+import mill.*, scalalib.*, scalajslib.*
