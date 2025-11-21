@@ -3,21 +3,17 @@ package app
 import app.config.*
 import app.context.ServerContext
 import cats.effect.ExitCode
-import ciris.ConfigValue
-import ciris.Secret
+import ciris.{ConfigValue, Secret}
 import com.comcast.ip4s.*
 import framework.config.*
 import framework.prelude.{*, given}
-import framework.utils.FrameworkHttpServer
-import framework.utils.SecurityUtils
-import framework.utils.ServerApp
+import framework.utils.{FrameworkHttpServer, SecurityUtils, ServerApp}
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.http4s.*
 import org.http4s.implicits.*
 import org.http4s.server.Router
 import org.typelevel.otel4s.metrics.MeterProvider
-import org.typelevel.otel4s.trace.Tracer
-import org.typelevel.otel4s.trace.TracerProvider
+import org.typelevel.otel4s.trace.{Tracer, TracerProvider}
 import scribe.Level
 import sttp.tapir.server.http4s.*
 
