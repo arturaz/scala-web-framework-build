@@ -4,7 +4,24 @@ You can also use this as a template for your own project.
 
 ## Usage
 
+### Initialization
+
 ```
 git submodule update --init
 ./mill __.compile
 ```
+
+### Running shared code tests
+
+```
+./mill appShared.tests.testForked
+```
+
+### Running server in continuous compilation mode
+
+```
+./mill -w appServer.runBackground
+```
+
+Note: the default server expects to have OpenTelemetry collector running on `localhost:4317`. If that isn't running
+it will occasionally log errors to the console.

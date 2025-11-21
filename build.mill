@@ -1,13 +1,17 @@
-//| mill-version: 1.0.3
+//| mill-version: 1.1.0-RC2
+//| mill-jvm-version: graalvm-oracle:21
 //| mill-jvm-opts:
 //| # Should be enough for compilation. Server compiles fine with 1GB, but ScalablyTyped conversion needs more.
 //| - "-Xmx4G"
-//| # ZGC returns unused memory back to the OS, so mill does not occupy so much memory if unused
-//| - "-XX:+UseZGC"
-//| - "-XX:ZUncommitDelay=30"
-//| - "-XX:ZCollectionInterval=5"
 //| # Enable tools like gprofiler
 //| - "-XX:+EnableDynamicAgentLoading"
+//| mvnDeps:
+//| # https://github.com/lolgab/mill-scalablytyped    
+//| - com.github.lolgab::mill-scalablytyped::0.4.0
+//| # https://github.com/hoangmaihuy/mill-universal-packager
+//| - io.github.hoangmaihuy::mill-universal-packager::0.2.0
+//| # https://github.com/joan38/mill-scalafix
+//| - com.goyeau::mill-scalafix::0.6.0
 
 package build
 
@@ -23,3 +27,90 @@ import framework.{
 }
 
 import mill.*, scalalib.*, scalajslib.*
+import mill.api.BuildCtx
+import coursier.maven.MavenRepository
+import com.goyeau.mill.scalafix.ScalafixModule
+import mill.api.Task.Simple
+
+val ClientDirName = "appClient"
+
+def ClientViteDir = BuildCtx.workspaceRoot / ClientDirName / "vite"
+
+/** Scala module for our own non-generated code. */
+trait AppScalaModule extends framework.FrameworkScalaModule with ScalafixModule {
+  override def scalacOptions = Task {
+    super.scalacOptions() ++ Seq(
+      // Required for scalafix 'RemoveUnused' rule.
+      "-Wunused:all",
+      // https://scalacenter.github.io/scalafix/docs/rules/RemoveUnused.html#installation
+      // Turn "-- [E198] Unused Symbol Warning" into an info message
+      "-Wconf:id=E198:info",
+    )
+  }
+
+  override def repositoriesTask = Task.Anon {
+    super.repositoriesTask() ++ Seq(
+      // Local Maven repository for packages that we build locally
+      MavenRepository(s"file://${sys.props("user.home")}/.m2/repository"),
+    )
+  }
+}
+
+/** ScalaJS module for our own non-generated code. */
+trait AppScalaJSModule extends framework.FrameworkScalaJSModule
+
+/** A module shared between JVM and JS. */
+trait AppPlatformModule extends framework.FrameworkPlatformModule
+
+/** Code common for all projects that use this stack and shared between JVM and JS.
+  *
+  * @note
+  *   all modules are prefixed with `app` to have them all listed nicely in an IDE in one place
+  */
+object appShared extends Module {
+  object jvm extends AppPlatformModule {
+    override def moduleDeps = Seq(
+      framework.shared.jvm
+    )
+  }
+
+  object js extends AppPlatformModule with AppScalaJSModule {
+    override def moduleDeps = Seq(
+      framework.shared.js
+    )
+  }
+
+  object tests extends AppScalaModule with FrameworkTestModule {
+    override def moduleDeps = Seq(jvm, framework.testInfra.jvm)
+  }
+}
+
+object appServer extends AppScalaModule {
+  override def moduleDeps = Seq(
+    appShared.jvm, framework.server
+  )
+
+  override def forkArgs = Seq(
+    "-Xmx1G" // 1Gb should be more than enough for development
+  )
+
+  override def forkEnv = Map(
+    "MY_APP_IS_PRODUCTION" -> "false"
+  )
+
+  object tests extends AppScalaModule with FrameworkTestModule {
+    override def moduleDeps = Seq(
+      framework.testInfra.jvm, framework.server.testInfra,
+      appServer, appShared.tests
+    )
+  }
+}
+
+object appClient extends AppScalaJSModule with framework.FrameworkScalaJSViteModule {
+  override def clientDirName = ClientDirName
+
+  override def moduleDeps = Seq(
+    appShared.js, 
+    framework.client, 
+  )
+}

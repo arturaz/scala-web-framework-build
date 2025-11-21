@@ -6,3 +6,6 @@
 
 # Mill build tool output
 /out
+
+# Log file for the development server
+development.log

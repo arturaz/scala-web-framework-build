@@ -1,0 +1,1 @@
+Database migrations are handled by https://github.com/geirolz/fly4s
